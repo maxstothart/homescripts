@@ -13,6 +13,10 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 --allow-other \
 # Google Drive is a polling remote so this value can be set very high and any changes are detected via polling.
 --dir-cache-time 5000h \
+# Files are never changed for me outside of the mount so the attr-timeout matches the dir-cache
+# Please make sure to read: https://rclone.org/commands/rclone_mount/#attribute-caching
+# To understand if this should be set for your use case
+--attr-timeout 5000h \
 # Log file location
 --log-file /opt/rclone/logs/rclone.log \
 # I reduce the poll internval down to 10 seconds as this makes changes appear fast the API quotas per day are huge
@@ -45,6 +49,8 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 --vfs-cache-max-size 750G \
 # This limits the age in the cache if the size is reached and it removes the oldest files first
 --vfs-cache-max-age 5000h \
+# The polling interval for increased based on there is enough buffer space
+--vfs-cache-poll-interval 5m \
 # This sets a per file bandwidth control and I limit this to a little bigger than my largest bitrate I'd want to play
 --bwlimit-file 32M
 ExecStop=/bin/fusermount -uz /GD
