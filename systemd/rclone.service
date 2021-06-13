@@ -42,7 +42,7 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 # My quota per user / per 100 seconds is 10,000 requests. This can be found in your quota section.
 # This changes the sleep calls to something much lower to take advantage of the API boost.
 # change the min sleep from 100ms
---drive-pacer-min-sleep 1ms \
+--drive-pacer-min-sleep 10ms \
 # This is used for caching files to local disk for streaming
 --vfs-cache-mode full \
 # This limits the cache size to the value below
