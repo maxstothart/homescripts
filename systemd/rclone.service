@@ -19,6 +19,8 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 --attr-timeout 5000h \
 # Log file location
 --log-file /opt/rclone/logs/rclone.log \
+# Set the log level
+--log-level INFO \
 # I reduce the poll internval down to 10 seconds as this makes changes appear fast the API quotas per day are huge
 --poll-interval 10s \
 # This is setting the file permission on the mount to user and group have the same access and other can read
@@ -43,6 +45,8 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 # This changes the sleep calls to something much lower to take advantage of the API boost.
 # change the min sleep from 100ms
 --drive-pacer-min-sleep 10ms \
+# Changing to have the ability for 1000 per second
+--drive-pacer-burst 1000
 # This is used for caching files to local disk for streaming
 --vfs-cache-mode full \
 # This limits the cache size to the value below
