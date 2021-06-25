@@ -46,7 +46,7 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 # change the min sleep from 100ms
 --drive-pacer-min-sleep 10ms \
 # Changing to have the ability for 1000 per second
---drive-pacer-burst 1000
+--drive-pacer-burst 1000 \
 # This is used for caching files to local disk for streaming
 --vfs-cache-mode full \
 # This limits the cache size to the value below
@@ -55,6 +55,8 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 --vfs-cache-max-age 5000h \
 # The polling interval for increased based on there is enough buffer space
 --vfs-cache-poll-interval 5m \
+# Add read ahead buffer to network latency issues
+--vfs-read-ahead 2G \
 # This sets a per file bandwidth control and I limit this to a little bigger than my largest bitrate I'd want to play
 --bwlimit-file 32M
 ExecStop=/bin/fusermount -uz /GD
