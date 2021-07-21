@@ -1,0 +1,25 @@
+#!/bin/python3
+
+import logging
+import os
+import sqlite3
+import subprocess
+import sys
+
+connection = sqlite3.connect('/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db')
+deleted_metadata = connection.execute('SELECT count(*) FROM metadata_items WHERE deleted_at IS NOT NULL').fetchone()[0]
+deleted_media_parts = connection.execute('SELECT count(*) FROM media_parts WHERE deleted_at IS NOT NULL').fetchone()[0]
+
+total =  int(deleted_metadata) + int(deleted_media_parts)
+#print(total)
+if (total > 100):
+    print (total), " trash items and that's too many"
+    print (exit)
+    exit
+
+if (total >0):
+    os.environ['PLEXAPI_CONFIG_PATH'] = "/home/felix/scripts/plexapi.ini"
+    from plexapi.server import PlexServer
+    plex = PlexServer()
+    for section in plex.library.sections(): section.emptyTrash()
+    print ("Emptied Trash")
