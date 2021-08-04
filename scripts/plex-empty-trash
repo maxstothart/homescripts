@@ -11,13 +11,12 @@ deleted_metadata = connection.execute('SELECT count(*) FROM metadata_items WHERE
 deleted_media_parts = connection.execute('SELECT count(*) FROM media_parts WHERE deleted_at IS NOT NULL').fetchone()[0]
 
 total =  int(deleted_metadata) + int(deleted_media_parts)
-#print(total)
 if (total > 100):
-    print (total), " trash items and that's too many"
-    print (exit)
-    exit
+    print (total, "trash items and that's too many")
+    exit()
 
-if (total >0):
+if (total > 0):
+    print (total, "trash items, so we'll empty it")
     os.environ['PLEXAPI_CONFIG_PATH'] = "/home/felix/scripts/plexapi.ini"
     from plexapi.server import PlexServer
     plex = PlexServer()
