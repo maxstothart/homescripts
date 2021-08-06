@@ -41,12 +41,12 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 # If everything is already scanned, you can leave it at the default as it helps things startup a little faster.
 #--vfs-read-chunk-size 1M \
 #
-# My quota per user / per 100 seconds is 10,000 requests. This can be found in your quota section.
+# My quota per user / per 100 seconds is 20,000 requests. This can be found in your quota section.
 # This changes the sleep calls to something much lower to take advantage of the API boost.
 # change the min sleep from 100ms
---drive-pacer-min-sleep 10ms \
+--drive-pacer-min-sleep 5ms \
 # Changing to have the ability for 1000 per second
---drive-pacer-burst 1000 \
+--drive-pacer-burst 2000 \
 # This is used for caching files to local disk for streaming
 --vfs-cache-mode full \
 # This limits the cache size to the value below
