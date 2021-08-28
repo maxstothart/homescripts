@@ -6,7 +6,7 @@ After=rclone.service
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/mergerfs /local:/GD /gmedia -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full,dropcacheonclose=true
+ExecStart=/usr/bin/mergerfs /local:/GD /gmedia -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=partial,dropcacheonclose=true
 KillMode=process
 Restart=on-failure
 
