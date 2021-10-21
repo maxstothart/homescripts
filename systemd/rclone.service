@@ -21,7 +21,7 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 --log-file /opt/rclone/logs/rclone.log \
 # Set the log level
 --log-level INFO \
-# I reduce the poll internval down to 10 seconds as this makes changes appear fast the API quotas per day are huge
+# I reduce the poll interval down to 10 seconds as this makes changes appear fast the API quotas per day are huge
 --poll-interval 10s \
 # This is setting the file permission on the mount to user and group have the same access and other can read
 --umask 002 \
@@ -34,7 +34,7 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 # no-auth is used as no one else uses my server and it is not a shared seedbox
 --rc-no-auth \
 # The local disk used for caching
---cache-dir=/cache \
+--cache-dir=/tmp/cache \
 #
 # My quota per user / per 100 seconds is 20,000 requests. This can be found in your quota section.
 # This changes the sleep calls to something much lower to take advantage of the API boost.
@@ -45,7 +45,7 @@ ExecStart=/usr/bin/rclone mount gcrypt: /GD \
 # This is used for caching files to local disk for streaming
 --vfs-cache-mode full \
 # This limits the cache size to the value below
---vfs-cache-max-size 750G \
+--vfs-cache-max-size 500G \
 # This limits the age in the cache if the size is reached and it removes the oldest files first
 --vfs-cache-max-age 5000h \
 # The polling interval for increased based on there is enough buffer space
