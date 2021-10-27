@@ -51,6 +51,12 @@ query="select count(*) from media_parts mp join media_items mi on mi.id = mp.med
 result=$(sqlite3 -header -line "$db" "$query")
 echo "${result:11} not analyzed for intros" | tee -a $logfile
 
+query="select file from media_parts mp join media_items mi on mi.id = mp.media_item_id where mi.library_section_id IN (SELECT id FROM library_sections WHERE section_type = 2) and mp.extra_data not like '%intros=%';"
+result=$(sqlite3 -header -line "$db" "$query")
+if [[ ! -z "$result" ]]; then
+	echo "${result:11} not analyzed for intros" | tee -a $logfile
+fi
+
 query="select count(*) from media_parts mp join media_items mi on mi.id = mp.media_item_id where mi.library_section_id IN (SELECT id FROM library_sections WHERE section_type = 2) and mp.extra_data like '%intros=%%7B%';"
 result=$(sqlite3 -header -line "$db" "$query")
 echo "${result:11} have intros" | tee -a $logfile
