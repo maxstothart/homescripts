@@ -27,7 +27,7 @@ Every night, a rclone upload scripts moves files from local to my Google Drive. 
 ## rclone and MergerFS
 
 ### Installation
-My Ubuntu setup:
+My Linux setup:
 
 ```
 No LSB modules are available.
