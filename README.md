@@ -129,7 +129,7 @@ These tips and more for Linux can be found at the [Plex Forum Linux Tips](https:
 
 ## Caddy Proxy Server
 
-I use Caddy to server majority of my things as I plug directly into Google Authentication oAuth2 for authentication. I can toggle CDN on and off via the proxy in the DNS.
+I use Caddy to server majority of my things as I plug directly into GitHub oAuth2 for authentication. I can toggle CDN on and off via the proxy in the DNS.
 
 My configuration is [here](https://github.com/animosity22/homescripts/blob/master/PROXY.MD).
 

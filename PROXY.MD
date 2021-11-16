@@ -16,19 +16,20 @@ User=felix
 Group=felix
 
 ; Letsencrypt-issued certificates will be written to this directory.
-Environment=CLOUDFLARE_API_TOKEN=CLOUDFLARETOKENHERE
-Environment=GOOGLE_CLIENT_ID=YOURCLIENTID
-Environment=GOOGLE_CLIENT_SECRET=YOURSECRET
-Environment=JWT_SECRET=MADEUPSECRETKEY
-Environment=JWT_ISSUER=MADEUPISSUERKEY
-
-ExecStart=/usr/local/bin/caddy run --config /opt/caddy/Caddyfile
-ExecReload=/bin/kill -USR1 $MAINPID
+Environment=CLOUDFLARE_API_TOKEN=TOKENHERE
+Environment=JWT_SECRET=JWTSECRET
 
 ; Use graceful shutdown with a reasonable timeout
 KillMode=mixed
 KillSignal=SIGQUIT
 TimeoutStopSec=5s
+
+; Always set "-root" to something safe in case it gets forgotten in the Caddyfile.
+ExecStart=/opt/caddy/caddy run --environ --config /opt/caddy/Caddyfile
+ExecReload=/opt/caddy/caddy reload --config /opt/caddy/Caddyfile
+
+LimitNOFILE=1048576
+LimitNPROC=512
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
@@ -43,132 +44,15 @@ https://caddyserver.com/download
 
 And pick the following plugins as I use CloudFlare and Google oAuth2:
 
-- github.com/caddy-dns/cloudflare
-- github.com/greenpau/caddy-auth-jwt
-- github.com/greenpau/caddy-auth-portal
+- caddy-dns/cloudflare
+- greenpau/caddy-auth-portal
+- greenpau/caddy-authorize
 
-I use proxy entries for all my items behind and Google oAuth for my login validation:
+There are documentation links on stepping through setup and configuration:
 
-```bash
-# These are the default settings and I store all my items in /opt for my applications I run
-{
-  storage file_system {
-    root /opt/caddy/ssl
-  }
-}
+https://authp.github.io/docs/authenticate/oauth/backend-oauth2-0007-github
 
-# This is no authentication and just how I serve OMBI
-ombi.domain.us {
-tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-}
-log {
-        output file /opt/caddy/logs/ombi.log
-        format single_field common_log
-}
-reverse_proxy localhost:5000
-}
-
-# Every thing in this section is secured by the auth portal
-apps.domain.us {
-tls     {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-        }
-
-log     {
-        output file /opt/caddy/logs/apps.log
-        format single_field common_log
-        }
-
-    route /auth* {
-        auth_portal {
-            path /auth
-            backends {
-                google_oauth2_backend {
-                    method oauth2
-                    realm google
-                    provider google
-                    client_id {$GOOGLE_CLIENT_ID}
-                    client_secret {$GOOGLE_CLIENT_SECRET}
-                    scopes openid email profile
-                    user user@domain.us add role verified
-                }
-            }
-            jwt {
-                token_name access_token
-                token_secret {$JWT_SECRET}
-                token_issuer {$JWT_ISSUER}
-                token_lifetime 604800
-            }
-                }
-     }
-
-    route /tautulli* {
-        jwt {
-          primary yes
-          trusted_tokens {
-            static_secret {
-              token_name access_token
-              token_secret {$JWT_SECRET}
-            }
-          }
-          auth_url /auth
-          allow roles verified
-        }
-        reverse_proxy localhost:8181
-    }
-
-    route /sonarr* {
-        jwt
-        reverse_proxy localhost:8989
-    }
-
-    route /radarr* {
-        jwt
-        reverse_proxy localhost:7878
-        }
-
-    route /bazarr* {
-        jwt
-        reverse_proxy localhost:6767
-        }
-
-    route /nzbget* {
-        jwt
-        reverse_proxy localhost:9876
-        }
-
-    route /jackett* {
-        jwt
-        reverse_proxy localhost:9117
-        }
-
-    route /webssh* {
-        jwt
-        uri strip_prefix /webssh
-        reverse_proxy localhost:7676
-        }
-
-    route /monit* {
-        jwt
-        uri strip_prefix /monit
-        reverse_proxy localhost:2812
-        }
-
-    route /grafana* {
-        jwt
-        uri strip_prefix /grafana
-        reverse_proxy localhost:3333
-        }
-
-    route /qbit* {
-        jwt
-        uri strip_prefix /qbit
-        reverse_proxy localhost:8080
-        }
-
-}
-```
+I use proxy entries for all my items behind and oAuth for my login validation.
 
 ## Caddy Plex Configuration
 
