@@ -2,16 +2,16 @@
 
 logfile="/home/felix/logs/plexstats.log"
 db="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
-echo "$(date "+%d.%m.%Y %T") PLEX LIBRARY STATS" | tee -a $logfile
-echo "Media items in Libraries" | tee -a $logfile
+echo "$(date "+%d.%m.%Y %T") PLEX LIBRARY STATS"
+echo "Media items in Libraries"
 query="SELECT Library, Items \
                         FROM ( SELECT name AS Library, \
                         COUNT(duration) AS Items \
                         FROM media_items m  \
                         LEFT JOIN library_sections l ON l.id = m.library_section_id  \
                         WHERE library_section_id > 0 GROUP BY name );"
-sqlite3 -header -line "$db" "$query" | tee -a $logfile
-echo " " | tee -a
+sqlite3 -header -line "$db" "$query"
+echo " "
 
 query="select count(*) from media_items"
 result=$(sqlite3 -header -line "$db" "$query")
@@ -19,19 +19,19 @@ echo "${result:11} files in library" | tee -a $logfile
 
 query="select count(*) from media_items where bitrate is null"
 result=$(sqlite3 -header -line "$db" "$query")
-echo "${result:11} files missing analyzation info" | tee -a $logfile
+echo "${result:11} files missing analyzation info"
 
 query="SELECT count(*) FROM media_parts WHERE deleted_at is not null"
 result=$(sqlite3 -header -line "$db" "$query")
-echo "${result:11} media_parts marked as deleted" | tee -a $logfile
+echo "${result:11} media_parts marked as deleted"
 
 query="SELECT count(*) FROM metadata_items WHERE deleted_at is not null"
 result=$(sqlite3 -header -line "$db" "$query")
-echo "${result:11} metadata_items marked as deleted" | tee -a $logfile
+echo "${result:11} metadata_items marked as deleted"
 
 query="SELECT count(*) FROM directories WHERE deleted_at is not null"
 result=$(sqlite3 -header -line "$db" "$query")
-echo "${result:11} directories marked as deleted" | tee -a $logfile
+echo "${result:11} directories marked as deleted"
 
 query="select count(*) from metadata_items meta \
                         join media_items media on media.metadata_item_id = meta.id \
@@ -39,9 +39,12 @@ query="select count(*) from metadata_items meta \
                         where part.extra_data not like '%deepAnalysisVersion=2%' \
                         and meta.metadata_type in (1, 4, 12) and part.file != '';"
 result=$(sqlite3 -header -line "$db" "$query")
-echo "${result:11} files missing deep analyzation info." | tee -a $logfile
+echo "${result:11} files missing deep analyzation info."
 
-echo " " | tee -a
+echo " "
 
+query="SELECT COUNT(0) FROM media_parts mp JOIN media_items mi ON mi.id = mp.media_item_id WHERE mi.library_section_id IN ( SELECT id FROM library_sections WHERE section_type = 2 ) AND mp.extra_data NOT LIKE '%intros=%' AND ( SELECT 1 FROM taggings WHERE taggings.metadata_item_id = mi.metadata_item_id AND taggings.text = 'intro' LIMIT 1 ) IS NULL;"
+result=$(sqlite3 -header -line "$db" "$query")
+echo "${result:11} not analyzed for intros"
 
 exit
