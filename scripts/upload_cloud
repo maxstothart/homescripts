@@ -3,7 +3,6 @@ set -e
 
 # RClone Config file
 RCLONE_CONFIG=/opt/rclone/rclone.conf; export RCLONE_CONFIG
-RCLONE_USER_AGENT=animosityapp; export RCLONE_USER_AGENT
 
 # Local Drive - This must be a local mount point on your server that is used for the source of files
 # WARNING: If you make this your rclone Google Drive mount, it will create a move loop
@@ -23,6 +22,8 @@ echo "excludes file not found, aborting..."; exit 1; fi
 if /bin/findmnt $LOCAL -o FSTYPE -n | grep fuse; then
 echo "FUSE file system found, exiting..."; exit 1; fi
 
-# Move older local files to the cloud...
-# I added in 3 days to let the files sit a few days so Plex intro anaylsis can happen locally
-/usr/bin/rclone move $LOCAL gcrypt: --log-file /opt/rclone/logs/upload.log -v --exclude-from /opt/rclone/scripts/excludes --delete-empty-src-dirs --fast-list --drive-stop-on-upload-limit --min-age 3d
+# Move to Movies Shared Folder
+/usr/bin/rclone move $LOCAL/Movies upload-movies:Movies --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --bind 192.168.1.31 --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v
+
+# Move to TV Shared Folder
+/usr/bin/rclone move $LOCAL/TV upload-tv:TV --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --bind 192.168.1.31 --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v
