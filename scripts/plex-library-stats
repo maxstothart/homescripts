@@ -2,7 +2,6 @@
 
 logfile="/home/felix/logs/plexstats.log"
 db="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
-echo "$(date "+%d.%m.%Y %T") PLEX LIBRARY STATS"
 echo "Media items in Libraries"
 query="SELECT Library, Items \
                         FROM ( SELECT name AS Library, \
@@ -15,7 +14,7 @@ echo " "
 
 query="select count(*) from media_items"
 result=$(sqlite3 -header -line "$db" "$query")
-echo "${result:11} files in library" | tee -a $logfile
+echo "${result:11} files in library"
 
 query="select count(*) from media_items where bitrate is null"
 result=$(sqlite3 -header -line "$db" "$query")
