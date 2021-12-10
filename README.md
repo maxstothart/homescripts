@@ -9,12 +9,19 @@ I use the latest rclone stable version downloaded direclty via the [script insta
 
 - Verizon Gigabit Fios
 - Dropbox with encrypted media folder
-- Debian 11
+- Ubuntu 20.04
 - Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
 - 32 GB of Memory
 - 250 GB SSD Storage for my root
 - 1TB SSD for rclone Disk Caching
 - 6TB mirrored for staging
+
+## Dropbox
+I migrated away from Google Drive to Dropbox as there still is an Enterprise Standard plan that seems to be unlimited space but I disliked
+the upload and download limits so I made the change. Dropbox is similiar to API usage compared to Google but there is not a pacer by default
+I work around that by setting a limit for transactions per second on the API via my mount command. API usage in Dropbox is tied to each
+application registration so I seperate out my apps and use one for uploading, one for movies and one for television shows as to never
+overload a particular one and allow easy reporting in the console.
 
 ## My Workflow
 
@@ -31,10 +38,10 @@ My Linux setup:
 
 ```
 No LSB modules are available.
-Distributor ID:	Debian
-Description:	Debian GNU/Linux 11 (bullseye)
-Release:	11
-Codename:	bullseye
+Distributor ID:	Ubuntu
+Description:	Ubuntu 20.04.3 LTS
+Release:	20.04
+Codename:	focal
 ```
 
 Fuse needs to be installed for a rclone mount to function. `allow-other` is for my use and not recommended for shared servers as it allows any user to see a rclone mount. I am on a dedicated server that only I use so that is why I uncomment it.
@@ -62,8 +69,9 @@ My use case for mergerfs is that I always want to write to the local disk first 
 For them it's not relevant if the file is local or remote as they should act the same. 
 
   	/media
-        /cache (local disk)
-        /DB (rclone mount)
+        /local (local disk)
+        /DB_Movies (rclone mount)
+		/DB_TV (rclone mount)
   
 
 My `rclone.conf` has an entry for the Google Drive connection and and encrypted folder in my Google Drive called `media`. I mount media with a rclone script to display the decrypted contents on my server. 
@@ -75,9 +83,11 @@ This is my current rclone.service file which has the mount settings documented i
 They are all mounted via systemd scripts. rclone is mounted first followed by the mergerfs mount.
 
 My media starts up items in order:
-1) [rclone service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
+1) [rclone-movies service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone-movies.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
 
-2) [mergerfs service](https://github.com/animosity22/homescripts/blob/master/systemd/media.service) This needs to be named the same as the mount point for the mount to work properly. I use `/media` so the file is named accordingly.
+2) [rclone-tv service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone-tv.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
+
+3) [mergerfs service](https://github.com/animosity22/homescripts/blob/master/systemd/media.service) This needs to be named the same as the mount point for the mount to work properly. I use `/media` so the file is named accordingly.
 
 
 ### mergerfs configuration
@@ -88,25 +98,25 @@ I found unionfs to not do what I wanted and I can't stand the hidden files so fo
 The following options always write to the first disk in the mount as with post 2.25 there are some changes with the settings so I had to add a few things that were default before.
 
 ```bash
-/usr/bin/mergerfs /cache:/DB /media -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=partial,dropcacheonclose=true
+/usr/bin/mergerfs /local:/DB_Movies:/DB_TV /media -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full,dropcacheonclose=true
 ```
 
 Important items:
 
 - `use_ino` is for hard linking with Sonarr/Radarr.
-- `cache.files=auto-partial` uses memory for caching and helps out a bit if you have extra memory to spare.
+- `cache.files=auto-full` uses memory for caching and helps out a bit if you have extra memory to spare.
 - `category.action=all`, `category.create=ff` says to always create directories / files on the first listed mount point and for my configuration that is `/cache`
 - if you are reading directly from your rclone mount, you don't need to worry about any of mergerfs' settings.
 
 ## Scheduled Nightly Uploads
 
-I move my files to my GD every night via a cron job and an [`upload cloud`](https://github.com/animosity22/homescripts/blob/master/scripts/upload_cloud) script. This leverages an [`excludes`](https://github.com/animosity22/homescripts/blob/master/scripts/excludes) file which gets rid of unwanted partial files and my torrent folder.
+I move my files to my GD every night via a cron job and an [`upload cloud`](https://github.com/animosity22/homescripts/blob/master/scripts/upload_cloud) script. 
 
 This is my cron entry:
 
 ```
 # Cloud Upload
-12 3 * * * /opt/rclone/scripts/upload_cloud
+12 3 * * * /opt/homescripts/scripts/upload_cloud
 ```
 
 This is my only upload to Dropbox as it is done on a nightly basis.
@@ -132,9 +142,3 @@ These tips and more for Linux can be found at the [Plex Forum Linux Tips](https:
 I use Caddy to server majority of my things as I plug directly into GitHub oAuth2 for authentication. I can toggle CDN on and off via the proxy in the DNS.
 
 My configuration is [here](https://github.com/animosity22/homescripts/blob/master/PROXY.MD).
-
-## Wireguard Configuration
-
-For all my private traffic, I use [TorGuard](https://torguard.net/) as they support port forwarding and have very good support. I recently changed from OpenVPN to Wireguard as it is an easier setup and more effecient.
-
-[Setup and Configuration](https://github.com/animosity22/homescripts/blob/master/WIREGUARD.MD).
