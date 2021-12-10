@@ -1,8 +1,0 @@
-#!/bin/bash
-# This installs caddy with the plugins that I use.
-
-CADDY_TELEMETRY=on curl https://getcaddy.com | bash -s personal http.cache,http.cgi,http.jwt,http.login,http.realip,tls.dns.cloudflare
-
-# debian - this changes the setcap option so a non root user can open up port 443
-sudo apt-get install libcap2-bin -y 
-sudo setcap cap_net_bind_service=+ep /usr/local/bin/caddy
