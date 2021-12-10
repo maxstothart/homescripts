@@ -2,6 +2,7 @@
 
 Here is the list of changes that I have to keep an idea of what has changed over time.
 
+* 12/10/2021 - Updated all scripts and added in tps limit for Dropbox to avoid any API issues.
 * 11/16/2021 - This is a pretty large update as I've moving away from Google Drive and migrating all my data to Dropbox.
 * 6/3/2021 - Updated the rclone.service to reduce the pacer sleep time since I found my quotas are increased
 * 6/1/2021 - I made a comment for the rclone.service for seeding libraries as I found 1M seemed
