@@ -18,8 +18,11 @@ echo "Already running, exiting..."; exit 1; fi
 if /bin/findmnt $LOCAL -o FSTYPE -n | grep fuse; then
 echo "FUSE file system found, exiting..."; exit 1; fi
 
-# Move to Movies Shared Folder
+# Rather than use excludes, I wanted to simplify and just have two move commands to move to Movies and TV Shows
+# Adjust a few settings to stay within the Dropbox API limits
+
+# Move to Movies Folder
 /usr/bin/rclone move $LOCAL/Movies upload-movies:Movies --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --bind 192.168.1.31 --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v
 
-# Move to TV Shared Folder
+# Move to TV Folder
 /usr/bin/rclone move $LOCAL/TV upload-tv:TV --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --bind 192.168.1.31 --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v
