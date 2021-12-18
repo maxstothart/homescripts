@@ -1,0 +1,28 @@
+[Unit]
+Description=Caddy
+Documentation=https://caddyserver.com/docs/
+After=network.target network-online.target
+Requires=network-online.target
+
+[Service]
+Type=notify
+
+; User and group the process will run as.
+User=felix
+Group=felix
+
+#Path to needed environment variables for Cloudflare API and JWT Secret.
+EnviornmentFile=/opt/caddy/caddyenv
+
+; Use graceful shutdown with a reasonable timeout
+KillMode=mixed
+KillSignal=SIGQUIT
+TimeoutStopSec=5s
+
+; Always set "-root" to something safe in case it gets forgotten in the Caddyfile.
+ExecStart=/opt/caddy/caddy run --environ --config /opt/caddy/Caddyfile
+ExecReload=/opt/caddy/caddy reload --config /opt/caddy/Caddyfile
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
