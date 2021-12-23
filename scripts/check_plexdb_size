@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+#
+# I had an issue that my Plex Database ballooned up due to API use so I have a check to validate
+# that the space isn't growing too crazy.
+
+find "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" -maxdepth 1 -size +600M | while read file; do
+  echo "$file is too large = $(stat -c%s "$file") bytes."
+done

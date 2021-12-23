@@ -1,0 +1,15 @@
+#!/bin/bash
+# 
+# Check for zero byte files or things not quite right
+
+RESULTS=`/usr/bin/find /media/TV -type f -size 0 -print 2>&1`
+
+if [ -n "${RESULTS}" ]; then
+	echo $RESULTS | /usr/bin/mail -s "0 Byte File Check" felix@animosity.us
+fi
+
+RESULTS=`/usr/bin/find /media/Movies -type f -size 0 -print 2>&1`
+
+if [ -n "${RESULTS}" ]; then
+        echo $RESULTS | /usr/bin/mail -s "0 Byte File Check" felix@animosity.us
+fi
