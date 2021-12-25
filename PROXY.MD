@@ -80,11 +80,9 @@ Plex also needs to have a few additional steps to be added so Caddy is used in a
 Remote Access - Disable
 
 ```
-Network - Custom server access URLs = https://<your-domain>:443,http://<your-domain>:80
+Network - Custom server access URLs = https://<your-domain>:443
 ```
-Network - Secure connections = Preferred
-
-<i>Note: You can force SSL by setting required and not adding the HTTP URL, however some players which do not support HTTPS (e.g: Roku, Playstations, some SmartTVs) will no longer function. I only use SSL is my config and as I do not open up HTTP traffic. </i>
+Network - Secure connections = Required
 
 ### Stopping Local Access
 By default, Plex regardless of what override URL you set will still connect locally to 32400. To remove this, I use the second option of adding the option to the Preferences.xml. You need to stop Plex and add the line in near the end of your Preferences.xml
