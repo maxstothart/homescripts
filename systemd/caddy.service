@@ -11,8 +11,12 @@ Type=notify
 User=felix
 Group=felix
 
-#Path to needed environment variables for Cloudflare API and JWT Secret.
+#Path to needed environment variables for Cloudflare API and JWT Secret. # This did not work for me
 EnviornmentFile=/opt/caddy/caddyenv
+
+# This worked
+Environment=CLOUDFLARE_API_TOKEN=YOURTOKENHERE
+Environment=JWT_SECRET=YOURTOKENHERE
 
 ; Use graceful shutdown with a reasonable timeout
 KillMode=mixed
