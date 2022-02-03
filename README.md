@@ -81,11 +81,12 @@ After fuse is installed, I install mergerfs. I would grab the proper package fro
 My use case for mergerfs is that I always want to write to the local disk first and all my applications (Sonarr/Radarr/Plex/Emby/any application) all point directly to `/media`.
 For them it's not relevant if the file is local or remote as they should act the same. 
 
+```
 /media
 	/local (local disk)
 	/DB_Movies (rclone mount)
 	/DB_TV (rclone mount)
-  
+```
 
 My `rclone.conf` has an entry for the Google Drive connection and and encrypted folder in my Google Drive called `media`. I mount media with a rclone script to display the decrypted contents on my server. 
 
