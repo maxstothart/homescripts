@@ -12,9 +12,22 @@ I use the latest rclone stable version downloaded direclty via the [script insta
 - Ubuntu 20.04
 - Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
 - 32 GB of Memory
-- 250 GB SSD Storage for my root
+- 1TB SSD Storage for my root
 - 1TB SSD for rclone Disk Caching
-- 6TB mirrored for staging
+- 1TB SSD local disk for temporary storage
+
+I adjusted my mounts on my Linux machine to use BTRFS over EXT4/XFS and found a huge performance improvement overall and would highly recommend
+checking it out. It provides other features like mirroring and snapshots which I don't use but they are nice to have.
+
+/etc/fstab
+```
+/dev/disk/by-uuid/f12cd4cf-d9e5-4022-8d16-5ccde5c4273e / btrfs defaults 0 1
+/dev/disk/by-uuid/7B20-481C /boot/efi vfat defaults 0 1
+
+# SSD
+/dev/disk/by-uuid/9d468b07-b129-4a2f-8a92-0f94216afe4f /cachet btrfs defaults 0 0
+/dev/disk/by-uuid/fa8fed66-e70a-44ed-9cdf-879a965df945 /local btrfs defaults 0 0
+```
 
 ## Dropbox
 I migrated away from Google Drive to Dropbox as there still is an Enterprise Standard plan that seems to be unlimited space but I disliked
