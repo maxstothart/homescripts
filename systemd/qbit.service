@@ -1,0 +1,20 @@
+[Unit]
+Description=qbit daemon
+Wants=rclone-movies.service rclone-tv.service
+After=rclone-movies.service rclone-tv.service
+Requires=rclone-movies.service rclone-tv.service
+
+[Service]
+Type=simple
+KillMode=process
+Restart=on-failure
+RestartSec=30
+User=felix
+Group=felix
+ExecStart=/usr/bin/qbittorrent-nox --profile=/opt/qbit
+ExecStartPost=/usr/bin/ionice -c2 -n4 -p $MAINPID
+ExecStartPost=/usr/bin/renice +10 -p $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+
