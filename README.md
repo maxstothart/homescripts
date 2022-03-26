@@ -92,8 +92,6 @@ My `rclone.conf` has an entry for the Google Drive connection and and encrypted 
 
 My rclone looks like: [rclone.conf](https://github.com/animosity22/homescripts/blob/master/rclone.conf)
 
-This is my current rclone.service file which has the mount settings documented in it [rclone.service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone.service)
-
 They are all mounted via systemd scripts. rclone is mounted first followed by the mergerfs mount.
 
 My media starts up items in order:
