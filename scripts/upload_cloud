@@ -22,7 +22,7 @@ echo "FUSE file system found, exiting..."; exit 1; fi
 # Adjust a few settings to stay within the Dropbox API limits
 
 # Move to Movies Folder
-/usr/bin/rclone move $LOCAL/Movies upload-movies:Movies --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v --bind 192.168.1.31
+/usr/bin/rclone move $LOCAL/Movies upload-movies:Movies --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v --min-age 1h
 
 # Move to TV Folder
-/usr/bin/rclone move $LOCAL/TV upload-tv:TV --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v --bind 192.168.1.31
+/usr/bin/rclone move $LOCAL/TV upload-tv:TV --log-file /opt/rclone/logs/upload.log --delete-empty-src-dirs --fast-list --dropbox-chunk-size 128M --tpslimit 12 --tpslimit-burst 12 --transfers 6 --stats-one-line -v --min-age 1h
