@@ -30,22 +30,26 @@ ExecStart=/usr/bin/rclone mount dcrypt-movies: /media/Movies \
 # This is used for caching files to local disk for streaming
 --vfs-cache-mode full \
 # This limits the cache size to the value below
---vfs-cache-max-size 700G \
+--vfs-cache-max-size 800G \
 # Wait before uploading
 --vfs-write-back 1h \
 # This limits the age in the cache if the size is reached and it removes the oldest files first
 --vfs-cache-max-age 9999h \
+# Add read ahead
+--vfs-read-ahead 1G \
 # Set the tpslimit
 --tpslimit 10 \
-# Set the tpslimit-burst \
+# Set the tpslimit-burst
 --tpslimit-burst 10 \
-# Fix IPV6 Errors if you are not running IPV6 \
---bind 0.0.0.0
+# Fix IPV6 Errors if you are not running IPV6
+--bind 192.168.1.30 \
+# Disable HTTP2
+--disable-http2
 ExecStop=/bin/fusermount -uz /media/Movies
 ExecStartPost=/usr/bin/rclone rc vfs/refresh recursive=true --rc-addr 127.0.0.1:5574 _async=true
 Restart=on-failure
 User=felix
-Group=felix
+Group=users
 
 [Install]
 WantedBy=multi-user.target
