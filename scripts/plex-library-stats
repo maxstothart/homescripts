@@ -1,7 +1,7 @@
 #!/bin/bash
 
 logfile="/home/felix/logs/plexstats.log"
-db="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
+db="/opt/docker/data/plex/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
 echo "Media items in Libraries"
 query="SELECT Library, Items \
                         FROM ( SELECT name AS Library, \
