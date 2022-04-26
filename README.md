@@ -148,6 +148,7 @@ Group=felix
 ```
 
 These tips and more for Linux can be found at the [Plex Forum Linux Tips](https://forums.plex.tv/t/linux-tips/276247).
+
 ### Plex
 - `Enable Thumbnail previews` - off: This creates a full read of the file to generate the preview and is set per library that is setup
 - `Perform extensive media analysis during maintenance` - off: This is listed under Scheduled Tasks and does a full download of files and is ony used for bandwidth analysis when streaming.
