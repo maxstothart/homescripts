@@ -9,15 +9,14 @@ I use the latest rclone stable version downloaded direclty via the [script insta
 
 - Verizon Gigabit Fios
 - Dropbox with encrypted media folder
-- Ubuntu 20.04
+- Linux
 - Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
 - 32 GB of Memory
-- 256GB SSD Storage for my root
-- 1TB and 2TB SSD for rclone disk cache
+- 1TB - root/system disk
+- 2TB SSD for rclone disk cache
 - Spinning disk for big storage pools
 
-I adjusted my mounts on my Linux machine to use BTRFS over EXT4/XFS and found a huge performance improvement overall and would highly recommend
-checking it out. It provides other features like mirroring and snapshots which I don't use but they are nice to have.
+I adjusted my mounts on my Linux machine to use BTRFS over EXT4/XFS and found a huge performance improvement.
 
 /etc/fstab
 ```
@@ -25,8 +24,9 @@ checking it out. It provides other features like mirroring and snapshots which I
 /dev/disk/by-uuid/7B20-481C /boot/efi vfat defaults 0 1
 
 # SSD
-/dev/disk/by-uuid/9d468b07-b129-4a2f-8a92-0f94216afe4f /cachet btrfs defaults 0 0
-/dev/disk/by-uuid/fa8fed66-e70a-44ed-9cdf-879a965df945 /local btrfs defaults 0 0
+UUID=7f93b2af-ad87-4db1-aa82-682136cec07a /cachet auto defaults 0 0
+UUID=e065dcaa-e548-45e6-a226-f5ea83b5ab22 /data auto defaults 0 0
+UUID=b6e7996a-01cc-4776-9f19-4cfb7dc46b7a /seed auto defaults 0 0
 ```
 
 ## Dropbox
@@ -38,29 +38,32 @@ overload a particular one and allow easy reporting in the console.
 
 ## My Workflow
 
-I use Sonarr and Radarr in conjuction with NZBGet and qBittorrent to get my media. 
+I use Sonarr and Radarr in conjuction with NZBGet and qBittorrent to get my media.
 
-My normal work flow grabs a file, downloads it to spinning disk, copies over to the proper /media folder and uploads automatically after an hour based on the rclone mount settings.
+My normal work flow grabs a file, downloads it to spinning disk (/seed), copies over to the proper /media folder and uploads automatically after an hour based on the rclone mount settings.
 The goal here was to remove mergerfs from my workflow as it is another layer and I wanted to reduce complexity that did not give me value. 
-## rclone
 
 ### Installation
 My Linux setup:
 
 ```
-No LSB modules are available.
-Distributor ID:	Ubuntu
-Description:	Ubuntu 20.04.3 LTS
-Release:	20.04
-Codename:	focal
+PRETTY_NAME="Ubuntu 22.04 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04 (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
 ```
 
 Fuse needs to be installed for a rclone mount to function. `allow-other` is for my use and not recommended for shared servers as it allows any user to see a rclone mount. I am on a dedicated server that only I use so that is why I uncomment it.
 
-```
-$ sudo apt install fuse
-```
-	
+
 You need to make the change to /etc/fuse.conf to `allow_other` by uncommenting the last line or removing the # from the last line.
 
 	sudo vi /etc/fuse.conf
@@ -76,7 +79,7 @@ You need to make the change to /etc/fuse.conf to `allow_other` by uncommenting t
 	
 
 ```
-//media
+/media
 	/Movies (rclone mount with vfs cache mode full)
 	/TV (rclone mount with vfs cache mode full)
 ```
@@ -91,8 +94,58 @@ My media starts up items in order:
 1) [rclone-movies service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone-movies.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
 
 2) [rclone-tv service](https://github.com/animosity22/homescripts/blob/master/systemd/rclone-tv.service) This is a standard rclone mount, the post execution command allows for the caching of the file structure in a single systemd file that simplies the process.
+### Docker
+I recently made the switch to containerize everything and move to dockers for ease of use mainly with Plex. For using hardware decoding
+for HDR tone maps, it's cumbersome to get working on any other OS than Ubuntu and docker provided by Plex already does this.
+I use an override.conf for my docker startup and require rclone mounts to be active or my dockers shutdown. This is to prevent any issues with mounts being empty or the order of boot as
+I want my rclone mounts to be ready and running for dockers as that's how I had my systemd services prior.
+
+```
+gemini:/etc/systemd/system/docker.service.d # cat override.conf
+[Unit]
+After=rclone-movies.service rclone-tv.service
+Requires=rclone-movies.service rclone-tv.service
+```
+
+I use docker compose for all my serivces and have portainer there for easier looking at things when I don't want to connect to a console. I use the same user ID/groups for my docker to
+simpify permissions. My plex compose is basic and looks like:
+
+```
+  plex:
+    image: lscr.io/linuxserver/plex
+    container_name: plex
+    network_mode: host
+    devices:
+     - /dev/dri:/dev/dri
+    privileged: true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/data/plex:/config
+      - /media/Movies:/media/Movies
+      - /media/TV:/media/TV
+    restart: unless-stopped
+	```
+
+	/dev/dri is a must for hardware transocding.
+
 ## Plex Tweaks```
-I use an override for plex to customize my user name and group to simplify my single server setup.
+I used to use an override for my plexmediaserver service to get around it running as the plex user and require services be running. This allows me to keep my trash empty on as if mount
+has a problem, it will stop plex.
+
+```
+gemini: /etc/systemd/system/plexmediaserver.service.d # cat override.conf
+[Unit]
+After=rclone-movies.service rclone-tv.service
+Requires=rclone-movies.service rclone-tv.service
+
+[Service]
+User=felix
+Group=felix
+```
 
 These tips and more for Linux can be found at the [Plex Forum Linux Tips](https://forums.plex.tv/t/linux-tips/276247).
 ### Plex

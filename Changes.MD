@@ -2,6 +2,7 @@
 
 Here is the list of changes that I have to keep an idea of what has changed over time.
 
+* 4/18/2022 - Made a ton of changes to remove mergerfs and go with dockers for ease of use.
 * 2/3/2022 - Adjusted rclone services to be cleaner. Changed ext4/xfs file systems to BTRFS for a huge performance bump.
 * 12/10/2021 - Updated all scripts and added in tps limit for Dropbox to avoid any API issues.
 * 11/16/2021 - This is a pretty large update as I've moving away from Google Drive and migrating all my data to Dropbox.
