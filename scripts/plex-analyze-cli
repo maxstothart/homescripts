@@ -8,7 +8,7 @@ import requests
 import sqlite3
 import sys
 
-conn = sqlite3.connect('/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db')
+conn = sqlite3.connect('/opt/docker/data/plex/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db')
 
 c = conn.cursor()
 c.execute('Select media_items.metadata_item_id As id, metadata_items.title As title From media_items Inner Join metadata_items On media_items.metadata_item_id = metadata_items.id Where media_items.bitrate Is Null And Not metadata_items.metadata_type = "12"')
