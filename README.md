@@ -128,15 +128,14 @@ simpify permissions. My plex compose is basic and looks like:
       - /media/Movies:/media/Movies
       - /media/TV:/media/TV
     restart: unless-stopped
-	```
+```
+/dev/dri is a must for hardware transocding.
 
-	/dev/dri is a must for hardware transocding.
-
-## Plex Tweaks```
+## Plex Tweaks
 I used to use an override for my plexmediaserver service to get around it running as the plex user and require services be running. This allows me to keep my trash empty on as if mount
 has a problem, it will stop plex.
 
-```
+
 gemini: /etc/systemd/system/plexmediaserver.service.d # cat override.conf
 [Unit]
 After=rclone-movies.service rclone-tv.service
@@ -145,9 +144,9 @@ Requires=rclone-movies.service rclone-tv.service
 [Service]
 User=felix
 Group=felix
-```
 
-These tips and more for Linux can be found at the [Plex Forum Linux Tips](https://forums.plex.tv/t/linux-tips/276247).
+
+These tips and more for Linux can be found at the [Plex Forum Linux Tips](https://forums.plex.tv/t/linux-tips/276247)
 
 ### Plex
 - `Enable Thumbnail previews` - off: This creates a full read of the file to generate the preview and is set per library that is setup
