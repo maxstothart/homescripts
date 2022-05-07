@@ -2,7 +2,7 @@
 
 This is my configuration that works for me the best for my use case of an all in one media server. This is not meant to be a tutorial by any means as it does require some knowledge to get setup. I'm happy to help out as best as I can and welcome any updates/fixes/pulls to make it better and more helpful to others.
 
-I use the latest rclone stable version downloaded direclty via the [script install](https://rclone.org/install/#script-installation) as package managers are frequently out of date and not maintained.
+I use the latest rclone stable version downloaded direclty via the [script install](https://rclone.org/install/#script-installation) as package managers are frequently out of date and not maintained. I see no need to use docker for my rclone setup as it's a single binary and easier to maintain and use without being in a docker. 
 
 [Change Log](https://github.com/animosity22/homescripts/blob/master/Changes.MD)
 
@@ -26,9 +26,8 @@ I adjusted my mounts on my Linux machine to use BTRFS over EXT4/XFS and found a 
 /dev/disk/by-uuid/7B20-481C /boot/efi vfat defaults 0 1
 
 # SSD
-UUID=7f93b2af-ad87-4db1-aa82-682136cec07a /cachet auto defaults 0 0
+UUID=7f93b2af-ad87-4db1-aa82-682136cec07a /cache auto defaults 0 0
 UUID=e065dcaa-e548-45e6-a226-f5ea83b5ab22 /data auto defaults 0 0
-UUID=b6e7996a-01cc-4776-9f19-4cfb7dc46b7a /seed auto defaults 0 0
 ```
 
 ## Dropbox
@@ -41,7 +40,16 @@ overload a particular one and allow easy reporting in the console.
 
 ## My Workflow
 
-I use Sonarr and Radarr in conjuction with NZBGet and qBittorrent to get my media. My normal work flow grabs a file, downloads it to spinning disk (/seed), copies over to the proper /media folder and uploads automatically after an hour based on the rclone mount settings. The goal here was to remove mergerfs from my workflow as it is another layer and I wanted to reduce complexity that did not give me value.
+The design goals for the workflow are to limit the amount of applications that being used and limit the amount of scripts that are being used as part of the process. That was the reason to remove mergerfs and the upload script from the workflow. This does remove the ability to use hard links in the process but the trade off of having duplicated files for a short period outweighed the con.
+
+Worfklow Pattern:
+1. Sonarr/Radarr identify a file to be downloaded
+2. qBit/NZBget downloads a file to local spinning disk (/data)
+3. Sonarr/Radarr see the download is complete, file is copied from spinning disk (/data) to the respective rclone mount (/media/Movies or media/TV)
+4. Rclone waits the delay time (1 hour in this setup) and uploads the file to the remote
+
+This workflow has a lot less moving parts and reduces the amount of things that can break. There is a local cache drive for rclone (/cache) that is used for the vfs-cache-mode full that stores the uploads before they get uploaded and any downloaded cache files. The only breakpoint here is if the cache area gets full, but generally that should not happen as files are uploaded within an hour and it is a 2TB SSD in this setup that should offer plenty of space. If that disk is too small, there can be issue with it filling up and creating an issue. Disk is cheap enough though that should not be a problem.
+
 
 ### Installation
 
@@ -80,13 +88,14 @@ user_allow_other
 
 ```
 
+Two rclone mounts are used and this could be expanded if there was a need for multiple mount points. The goal here is each mount point for unique for each "pair" of applications uses. As an example, Sonarr/Plex use the /media/TV mount and point to that specifically. This allows for downloads and uploads to work on a mount point. Any uploads are handled by rclone without the need for an additional upload script. The upload delay is configurable and 1 hour is the parameter being used here.
+
 ```bash
-/media
-   /Movies (rclone mount with vfs cache mode full)
-   /TV (rclone mount with vfs cache mode full)
+/media/Movies (rclone mount with vfs cache mode full)
+/media/TV (rclone mount with vfs cache mode full)
 ```
 
-My `rclone.conf` has an entry for the Google Drive connection and and encrypted folder in my Google Drive called `media`. I mount media with a rclone script to display the decrypted contents on my server.
+My `rclone.conf` has an entry multiple entries for Dropbox as unlike Google that does rate limiting per user, Dropbox does it per application that is registered so there is an application registration for each mount point to break up the API hits. As of this time, the sweet spot for Dropbox is 12 TPS per application registration so each of my mounts takes that into account. The same encryption password is used for both in my case for ease of use and that is not a requirement.
 
 My rclone looks like: [rclone.conf](https://github.com/animosity22/homescripts/blob/master/rclone.conf)
 
@@ -99,8 +108,69 @@ My media starts up items in order:
 
 ### Docker
 
-I recently made the switch to containerize everything and move to dockers for ease of use mainly with Plex. For using hardware decoding
-for HDR tone maps, it's cumbersome to get working on any other OS than Ubuntu and docker provided by Plex already does this. I use an override.conf for my docker startup and require rclone mounts to be active or my dockers shutdown. This is to prevent any issues with mounts being empty or the order of boot as I want my rclone mounts to be ready and running for dockers as that's how I had my systemd services prior.
+With the exception of rclone, all applications are setup in a docker-compose and leverage docker for ease of use, maintenance and upgrades. With Plex, it is advised to leverage a docker as for ensuring that hardware transcoding and HDR tone mapping support, only certain Linux OS flavors work easy without docker. By putting Plex in a docker, there is minimal configuration that needs to be done to get full hardware support as depending on hardware, it does get complex.
+
+[Plex HDR Tone Mapping Support](https://support.plex.tv/articles/hdr-to-sdr-tone-mapping/)
+
+Docker install for each operating system can be instructions are here: [Docker Install Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+
+The docker-compose.yml below is what is being used for multiple applications as Sonarr, Radarr and Plex are included below. The key for hardware support is ensuring that /dev/dri is mapped and a single UID/GID is consistent in the configuration as UID=1000 and GID=1000 is the only user configured on my single server setup.
+
+The docker setup is configured in /opt/docker and all the data for every application is stored in /opt/docker/data in this configuration. That is backed up on a daily basis to another location and occassinally to cloud storage depending on the risk appetite. 
+
+#### My Docker-Compose
+
+```bash
+version: '3'
+services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/data/sonarr:/config
+      - /media/TV:/media/TV
+      - /data:/data
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+      radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/data/radarr:/config
+      - /media/Movies:/media/Movies
+      - /data:/data
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+      plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    devices:
+     - /dev/dri:/dev/dri
+    privileged: true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - TZ=America/New_York
+    volumes:
+      - /opt/docker/data/plex:/config
+      - /media/Movies:/media/Movies
+      - /media/TV:/media/TV
+    restart: unless-stopped
+```
+
+The override below forces the docker server to require the rclone mounts and if the rclone mounts stop, systemd will stop all the docker services that are running. This allow the dependencies to be done to ensure that the applications do not lose media and stop if an issue with rclone occurs.
 
 ```bash
 gemini:/etc/systemd/system/docker.service.d # cat override.conf
@@ -135,8 +205,7 @@ I use docker compose for all my serivces and have portainer there for easier loo
 
 ## Plex Tweaks
 
-I used to use an override for my plexmediaserver service to get around it running as the plex user and require services be running. This allows me to keep my trash empty on as if mount
-has a problem, it will stop plex.
+This is a legacy tweak for the plexmediaserver service to get around it running as the plex user and require services be running. This allows me to keep my trash empty on as if mount has a problem, it will stop plex. This requires /var/lib/plexmediaserver (on Linux) to be changed to the owner and group defined below.
 
 ```bash
 gemini: /etc/systemd/system/plexmediaserver.service.d # cat override.conf
