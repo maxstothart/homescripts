@@ -3,21 +3,24 @@
 ## Caddy Service File
 ```bash
 [Unit]
-Description=Caddy HTTP/2 web server
-Documentation=https://caddyserver.com/docs
-Wants=network-online.target
-After=network-online.target
+Description=Caddy
+Documentation=https://caddyserver.com/docs/
+After=network.target network-online.target
+Requires=network-online.target
 
 [Service]
-Restart=on-failure
+Type=notify
 
 ; User and group the process will run as.
 User=felix
-Group=felix
+Group=users
 
-; Letsencrypt-issued certificates will be written to this directory.
-Environment=CLOUDFLARE_API_TOKEN=TOKENHERE
-Environment=JWT_SECRET=JWTSECRET
+#Path to needed environment variables for Cloudflare API and JWT Secret.
+Environment=EMAIL=earl.texter@gmail.com
+Environment=GITHUB_CLIENT_ID="CLIENTID"
+Environment=GITHUB_CLIENT_SECRET=CLIENTSECRET
+Environment=CLOUDFLARE_API_TOKEN="CLOUDAPIONLYTOKENFORDNS"
+Environment=JWT_SHARED_KEY=RANDOMSHAREDKEY
 
 ; Use graceful shutdown with a reasonable timeout
 KillMode=mixed
@@ -27,9 +30,6 @@ TimeoutStopSec=5s
 ; Always set "-root" to something safe in case it gets forgotten in the Caddyfile.
 ExecStart=/opt/caddy/caddy run --environ --config /opt/caddy/Caddyfile
 ExecReload=/opt/caddy/caddy reload --config /opt/caddy/Caddyfile
-
-LimitNOFILE=1048576
-LimitNPROC=512
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
@@ -61,15 +61,106 @@ I use [Caddy](https://github.com/mholt/caddy) as a proxy server and if you want 
 My plex configuration in my CaddyFile as follows:
 
 ```bash
+{
+	email {env.EMAIL}
+	storage file_system {
+		root /opt/caddy/ssl
+	}
+	https_port 443
+	order authenticate before respond
+	order authorize before basicauth
+
+	security {
+		oauth identity provider github {env.GITHUB_CLIENT_ID} {env.GITHUB_CLIENT_SECRET}
+
+		authentication portal myportal {
+			crypto default token lifetime 172800
+			crypto key sign-verify {env.JWT_SHARED_KEY}
+			cookie domain domain.us
+			enable identity provider github
+			ui {
+				links {
+					"My Identity" "/whoami" icon "las la-user"
+				}
+			}
+
+			transform user {
+				match realm github
+				match sub github.com/yourusernamehere
+				action add role authp/admin
+			}
+		}
+
+		authorization policy mypolicy {
+			set auth url https://auth.domain.us/oauth2/github
+			crypto key verify {env.JWT_SHARED_KEY}
+			allow roles authp/admin authp/user
+			validate bearer header
+			inject headers with claims
+		}
+	}
+}
+
 plex.domain.us {
-tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	reverse_proxy localhost:32400
+	encode gzip
 }
-reverse_proxy localhost:32400
-log {
-        output file /opt/caddy/logs/plex.log
-        format single_field common_log
+
+ombi.domain.us {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	reverse_proxy localhost:5000
+	encode gzip
 }
+
+auth.domain.us {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	authenticate with myportal
+}
+
+apps.domain.us {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+
+	encode gzip
+	authorize with mypolicy
+	reverse_proxy localhost:2812
+
+	route /tautulli* {
+		reverse_proxy localhost:8181
+	}
+
+	route /sonarr* {
+		reverse_proxy localhost:8989
+	}
+
+	route /radarr* {
+		reverse_proxy localhost:7878
+	}
+
+	route /bazarr* {
+		reverse_proxy localhost:6767
+	}
+
+	route /nzbget* {
+		reverse_proxy localhost:6789
+	}
+
+	route /jackett* {
+		reverse_proxy localhost:9117
+	}
+
+	route /qbit* {
+		uri strip_prefix /qbit
+		reverse_proxy localhost:8080
+	}
 }
 ```
 
