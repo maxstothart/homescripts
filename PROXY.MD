@@ -36,17 +36,16 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 ```
 
-## Google Authentication
+## Github Authentication
 
 For now while Caddy updates the automated build process, I download from:
 
 https://caddyserver.com/download
 
-And pick the following plugins as I use CloudFlare and Google oAuth2:
+And pick the following plugins as I use CloudFlare and Github oAuth2:
 
 - caddy-dns/cloudflare
-- greenpau/caddy-auth-portal
-- greenpau/caddy-authorize
+- greenpau/caddy-security
 
 There are documentation links on stepping through setup and configuration:
 
